@@ -1,2 +1,16 @@
 # Ignore all images in Main_Dataset
 Main_Dataset/*
+# But keep the folder itself (so it still shows in the repo)
+!Main_Dataset/.gitkeep
+
+
+# Ignore everything inside Processed_Dataset
+Processed_Dataset/
+# But keep the folder itself (so it still shows in the repo)
+!Processed_Dataset/.gitkeep
+
+
+# Ignore everything inside Processed_Dataset
+Final_Dataset/
+# But keep the folder itself (so it still shows in the repo)
+!Final_Dataset/.gitkeep
