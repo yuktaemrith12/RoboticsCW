@@ -37,7 +37,7 @@ def load_classifier():
     model = models.resnet50()
     model.fc = nn.Linear(model.fc.in_features, len(CLASSES))
     # adjust path if needed
-    state = torch.load('office_item_classifier.pth', map_location='cpu')
+    state = torch.load('models/office_item_classifier.pth', map_location='cpu')
     model.load_state_dict(state)
     model.eval()
     return model
