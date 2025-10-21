@@ -82,9 +82,9 @@ pip install -r requirements.txt
 
 ### 4. Dataset Access
 
-The dataset (≈ 10 classes × several hundred images each) is too large for direct upload.
-Download the zipped dataset here → [**https://drive.google.com/file/d/18K4xG9XFKQ2DGNMg43CZ8u7B-xJFcFJg/view?usp=drive_link**](#)
-Unzip into:
+* The dataset (≈ 10 classes × several hundred images each) is too large for direct upload.
+* Download the zipped dataset here → [**https://drive.google.com/file/d/18K4xG9XFKQ2DGNMg43CZ8u7B-xJFcFJg/view?usp=drive_link**](#)
+* Unzip into:
 
 ```
 Classification/dataset/Final_Dataset/
@@ -138,15 +138,15 @@ Ensure GPU runtime is enabled for faster processing.
 
 ## 🧱 Dataset Card
 
-**Name:** Office-Goods Dataset
-**Version:** 1.0
-**Source:** Kaggle / Roboflow 
-**Classes:** 10 (chair, desk lamp, headphones, keyboard, monitor, mouse, mug, notepad, pen, table)
-**Size:** ≈ 4,500 images
-**Splits:** Train (70 %), Validation (15 %), Test (15 %)
-**License:** Public, educational use
-**Pre-processing:** Resized 224×224 px, normalized, converted to JPEG RGB
-**Usage:** For classification 
+* **Name:** Office-Goods Dataset
+* **Version:** 1.0
+* **Source:** Kaggle / Roboflow 
+* **Classes:** 10 (chair, desk lamp, headphones, keyboard, monitor, mouse, mug, notepad, pen, table)
+* **Size:** ≈ 4,500 images
+* **Splits:** Train (70 %), Validation (15 %), Test (15 %)
+* **License:** Public, educational use
+* **Pre-processing:** Resized 224×224 px, normalized, converted to JPEG RGB
+* **Usage:** For classification 
 
 ---
 
