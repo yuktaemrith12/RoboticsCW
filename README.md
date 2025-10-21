@@ -83,7 +83,7 @@ pip install -r requirements.txt
 ### 4. Dataset Access
 
 * The dataset (≈ 10 classes × several hundred images each) is too large for direct upload.
-* Download the zipped dataset here → [**https://drive.google.com/file/d/18K4xG9XFKQ2DGNMg43CZ8u7B-xJFcFJg/view?usp=drive_link**](#)
+* Download the zipped dataset here → [**[Classification Dataset](https://drive.google.com/file/d/18K4xG9XFKQ2DGNMg43CZ8u7B-xJFcFJg/view?usp=drive_link)**](#)
 * Unzip into:
 
 ```
