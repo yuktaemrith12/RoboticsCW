@@ -20,7 +20,7 @@ import seaborn as sns
 from sklearn.metrics import confusion_matrix, accuracy_score, f1_score
 
 # --- Configuration ---
-MODEL_PATH = 'office_item_classifier.pth'
+MODEL_PATH = 'models/office_item_classifier.pth'
 TEST_DIR = 'Classification/dataset/Final_Dataset/test'
 BATCH_SIZE = 32
 
