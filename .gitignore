@@ -1,5 +1,5 @@
 # Ignore all images in Main_Dataset
-Main_Dataset/*
+Main_Dataset/
 # But keep the folder itself (so it still shows in the repo)
 !Main_Dataset/.gitkeep
 

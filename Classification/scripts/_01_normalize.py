@@ -8,7 +8,7 @@ import os
 from PIL import Image
 from tqdm import tqdm # for progress bar
 
-INPUT_DIR = 'Main_Dataset'
+INPUT_DIR = 'Classification/dataset/Main_Dataset'
 OUTPUT_DIR = 'Classification/dataset/Processed_Dataset'
 SIZE = (224, 224)
 
