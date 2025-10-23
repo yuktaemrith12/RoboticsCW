@@ -194,8 +194,4 @@ When running `_03_evaluate_model.py`:
 
 ---
 
-## 📹 Demonstration
-
-🎥 *Code-walkthrough and live classification demo video:* [YouTube Link](#)
-
 
