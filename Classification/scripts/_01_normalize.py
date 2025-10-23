@@ -1,4 +1,4 @@
-# ======= Normaliza Dataset Images ==========
+# ======= NORMALISE IMAGE DATASET ==========
 # Creates Processed_Dataset directory 
 # Resizes images to 224x224 pixels
 # Converts images to JPEG format with quality 95
@@ -29,7 +29,7 @@ def resize_images():
         
         try:
             img = Image.open(img_path)
-            img = img.resize(SIZE, Image.Resampling.LANCZOS) # Pixel enhancement through resizing => find out how
+            img = img.resize(SIZE, Image.Resampling.LANCZOS) # Pixel enhancement through resizing 
             img = img.convert('RGB')
             img.save(out_path, 'JPEG', quality=95)
         except Exception as e:
