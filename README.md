@@ -180,7 +180,17 @@ When running `_03_evaluate_model.py`:
 
 * Console prints overall accuracy, macro F1, and per-class accuracy.
 * A **Seaborn confusion matrix** pops up for visual validation.
+---
 
+
+## 🛠️ Troubleshooting
+
+| Issue                        | Possible Cause                      | Fix                                                                    |
+| :--------------------------- | :---------------------------------- | :--------------------------------------------------------------------- |
+| `torch not found`            | Environment not activated           | Run `source venv/bin/activate` or `venv\Scripts\activate`              |
+| `FileNotFoundError: dataset` | Dataset not extracted properly      | Ensure the folder path matches `Classification/dataset/Final_Dataset/` |
+| Webcam not opening           | Access permission or missing driver | Restart browser / allow camera / use `python app.py` locally           |
+| Poor accuracy on retrain     | Unbalanced data or too few epochs   | Increase epochs (25-30) and check dataset split                        |
 
 ---
 
@@ -193,5 +203,8 @@ When running `_03_evaluate_model.py`:
 | **Kevan Chinapul**        | M00963905  |
 
 ---
+
+
+
 
 
