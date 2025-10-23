@@ -160,7 +160,22 @@
     <!-- ============================== DETECTION ================================== -->
 
     <section id="detection" class="section">
+      <div class="card">
+        <h2 class="card-title center">Office Item Detector</h2>
+        <p class="hint center">Click “Start Webcam” to view live detection. Click “Stop Webcam” to pause the stream.</p>
 
+        <div class="detector">
+          <div class="preview" id="detector-preview">
+            <img id="detector-stream" class="hidden" alt="Live detection stream">
+            <span id="detector-placeholder" class="muted">Detection Stream</span>
+          </div>
+
+          <div class="row center gap">
+            <button class="btn primary" id="detector-start" onclick="startDetection()">Start Webcam</button>
+            <button class="btn" id="detector-stop" onclick="stopDetection()" disabled>Stop Webcam</button>
+          </div>
+        </div>
+      </div>
     </section>
 
   </main>
@@ -342,8 +357,6 @@
       }
 
       const data = await res.json();
-
-
       // Build webcam result card
       box.innerHTML = '';
       const row = document.createElement('div');
@@ -373,7 +386,45 @@
     }
 
 
-    
+    // --- Detection live stream toggle (client-side) ---
+    let detectorActive = false;
+
+    function startDetection(){
+      const img = document.getElementById('detector-stream');
+      const ph  = document.getElementById('detector-placeholder');
+
+      // cache-bust so a fresh MJPEG stream starts
+      img.src = '/video_feed?ts=' + Date.now();
+
+      // when first frame arrives, swap placeholder for stream
+      img.onload = () => {
+        img.classList.remove('hidden');
+        ph.classList.add('hidden');
+      };
+
+      // button states
+      document.getElementById('detector-start').disabled = true;
+      document.getElementById('detector-stop').disabled  = false;
+      detectorActive = true;
+    }
+
+    function stopDetection(){
+      const img = document.getElementById('detector-stream');
+      img.src = '';                             // stop fetching the MJPEG stream
+      img.classList.add('hidden');
+      document.getElementById('detector-placeholder').classList.remove('hidden');
+
+      document.getElementById('detector-start').disabled = false;
+      document.getElementById('detector-stop').disabled  = true;
+      detectorActive = false;
+    }
+
+    // Optional: stop stream when navigating away
+    window.addEventListener('beforeunload', () => {
+      if (detectorActive) stopDetection();
+    });
+
+
   </script>
 </body>
 </html>

@@ -24,6 +24,7 @@ from ultralytics import YOLO
 
 app = Flask(__name__)
 
+
 # =========================================================
 # =============== 1) CLASSIFICATION SECTION ===============
 # =========================================================
@@ -37,7 +38,7 @@ def load_classifier():
     model = models.resnet50()
     model.fc = nn.Linear(model.fc.in_features, len(CLASSES))
     # adjust path if needed
-    state = torch.load('models/office_item_classifier.pth', map_location='cpu')
+    state = torch.load('office_item_classifier.pth', map_location='cpu')
     model.load_state_dict(state)
     model.eval()
     return model
@@ -64,7 +65,7 @@ def run_cls_inference(img_tensor: torch.Tensor):
     main_idx = top3_idx[0][0].item()
     main_class = CLASSES[main_idx]
     main_conf = float(top3_probs[0][0].item() * 100)
-
+                                                                                                                            
     other_preds = None
     if main_conf < 95:
         other_preds = [
@@ -144,6 +145,106 @@ def predict():
         return jsonify({'error': f'Failed to process image: {e}'}), 400
 
 
+# ======================================================
+# =============== 2) DETECTION SECTION ================
+# ======================================================
+
+# Load your custom-trained YOLO detection model
+
+det_model = YOLO('best.pt')
+
+# Thread-safe buffers using deque
+raw_frames_buffer = deque(maxlen=1)
+processed_frames_buffer = deque(maxlen=1)
+stop_event = threading.Event()
+
+camera = None
+capture_thread = None
+processing_thread = None
+
+def create_placeholder_frame(text):
+    """Creates a black frame with centered text (used before first detection frame)."""
+    frame = np.zeros((480, 640, 3), dtype=np.uint8)
+    text_size = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 1, 2)[0]
+    text_x = (frame.shape[1] - text_size[0]) // 2
+    text_y = (frame.shape[0] + text_size[1]) // 2
+    cv2.putText(frame, text, (text_x, text_y),
+                cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+    return frame
+
+def capture_frames(cam):
+    """Continuously capture frames and push to raw buffer."""
+    while not stop_event.is_set():
+        success, frame = cam.read()
+        if success:
+            raw_frames_buffer.append(frame)
+        else:
+            time.sleep(0.1)
+
+def process_frames():
+    """Pop raw frames, run YOLO, push annotated frames."""
+    while not stop_event.is_set():
+        try:
+            raw = raw_frames_buffer.popleft()
+
+            # Process with YOLO (let YOLO handle resize for speed)
+            results = det_model(raw, imgsz=640, verbose=False)
+            
+            # Use default confidence (0.25)
+            annotated = results[0].plot()
+            
+            # --- Optional Test: Lower confidence to see weak detections ---
+            # annotated = results[0].plot(conf=0.1) 
+
+            processed_frames_buffer.append(annotated)
+        except IndexError:
+            # Buffer was empty, wait a moment
+            time.sleep(0.01)
+
+def generate_web_frames():
+    """MJPEG generator for /video_feed."""
+    processed_frames_buffer.append(create_placeholder_frame("Initializing..."))
+    
+    try:
+        while not stop_event.is_set():
+            try:
+                # Peek at the last frame, don't pop (for smooth FPS)
+                frame = processed_frames_buffer[0]
+
+                ok, buf = cv2.imencode('.jpg', frame)
+                if not ok:
+                    continue
+                frame_bytes = buf.tobytes()
+                
+                yield (b'--frame\r\n'
+                       b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
+
+                # Target ~30 FPS on the browser side
+                time.sleep(0.03) 
+                
+            except IndexError:
+                # Buffer was empty, wait a moment
+                time.sleep(0.01)
+    finally:
+        # This 'finally' block runs when the client disconnects
+        print("[YOLO] Client disconnected from video feed.")
+        stop_detection_threads()
+
+# ---- Detection routes ----
+
+@app.route('/detect')
+def detect_page():
+    """Simple page that shows the live YOLO stream (create templates/detect.html)."""
+    return render_template('detect.html')
+
+@app.route('/video_feed')
+def video_feed():
+    """Live MJPEG stream for detection."""
+    # *FIX: Start threads *only when this page is requested
+    start_detection_threads(camera_index=0) 
+    return Response(generate_web_frames(),
+                    mimetype='multipart/x-mixed-replace; boundary=frame')
+
 
 # ======================================================
 # ================== 3) APP START/STOP =================
@@ -153,6 +254,9 @@ def start_detection_threads(camera_index=0):
     global camera, capture_thread, processing_thread
     if capture_thread and capture_thread.is_alive():
         return  # already running
+
+    # *FIX*: Clear the stop event in case it was set by a previous run
+    stop_event.clear()
 
     camera = cv2.VideoCapture(camera_index)
     if not camera.isOpened():
@@ -173,18 +277,8 @@ def stop_detection_threads():
         processing_thread.join(timeout=1)
     if camera:
         camera.release()
+        camera = None # Set camera to None after release
         print("[YOLO] Camera released.")
-
-
-
-def boot_detection():
-    """Initialize YOLO detection threads."""
-    try:
-        start_detection_threads(camera_index=0)
-        print("[YOLO] Detection threads started successfully.")
-    except Exception as e:
-        print(f"[YOLO] Startup error: {e}")
-
 
 @app.route('/healthz')
 def health():
@@ -193,7 +287,7 @@ def health():
 
 if __name__ == '__main__':
     try:
-        boot_detection()  # start YOLO threads once before running Flask
+
         app.run(host='0.0.0.0', port=5000, debug=False, threaded=True)
     except (KeyboardInterrupt, SystemExit):
         print("Shutdown signal received.")

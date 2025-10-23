@@ -1,72 +1,70 @@
 
-# 🧠 Office Item Classification – AI in Robotics (PDE3802)
+# 🧠 AI in Robotics (PDE3802) — Office Item Classification
 
 ## 📘 Overview
-
-This repository contains the **Classification Module** for the *AI in Robotics (PDE3802)* coursework 
-The goal is to design and implement a **deep-learning-based classifier** that recognizes common office items from single images or live webcam feeds.
+This repository contains the **Classification Module** for the *AI in Robotics (PDE3802)* coursework.  
+It forms the **Perception** component of the desk-organising robotic arm — enabling the robot to **identify and label common office items** from images or a live webcam feed.  
 
 ---
 
 ## 🧩 Project Structure
-
 ```
+
 ROBOTICSCW/
 │
 ├── Classification/
 │   ├── dataset/
-│   │   ├── Main_Dataset/           # Raw dataset – 10 office item classes
-│   │   ├── Processed_Dataset/      # Normalized images (224×224 RGB)
-│   │   └── Final_Dataset/          # Train / Validation / Test split
+│   │   ├── Main_Dataset/         # Raw dataset – 10 office item classes
+│   │   ├── Processed_Dataset/    # Normalised 224×224 RGB images
+│   │   └── Final_Dataset/        # Train / Validation / Test split
 │   │
 │   └── scripts/
-│       ├── _01_normalize.py        # Image cleaning & resizing
-│       ├── _02_split_script.py     # Train/Val/Test split script
-│       ├── _03_evaluate_model.py   # Metrics & confusion matrix
+│       ├── _01_normalize.py      # Image resizing and cleaning
+│       ├── _02_split_script.py   # Train/Val/Test split automation
+│       ├── _03_evaluate_model.py # Accuracy, F1, confusion matrix
 │       └── Training_Classification_Model.ipynb
 │
-├── app.py                          # Flask app for image + webcam classification
-├── office_item_classifier.pth      # Saved ResNet-50 model weights
+├── app.py                        # Flask app for upload + webcam classification
+├── office_item_classifier.pth    # Trained ResNet-50 weights
 │
 ├── static/
-│   ├── style.css                   # UI design
+│   ├── style.css
 │   └── logo.png
 │
 ├── templates/
-│   └── index.html                  # Web interface (upload + webcam tabs)
+│   └── index.html                # Web interface (two-tab UI)
 │
-└── README.md                       # You are here
-```
+└── README.md
+
+````
 
 ---
 
-## 🧠 Recognized Classes
-
-| Class      | Example               |
-| ---------- | --------------------- |
-| chair      | office chairs         |
-| desk lamp  | table/LED lamps       |
-| headphones | wired/wireless        |
-| keyboard   | mechanical & membrane |
-| monitor    | LCD/LED monitors      |
-| mouse      | wired/wireless        |
-| mug        | ceramic/cup           |
-| notepad    | notebooks             |
-| pen        | writing pens          |
-| table      | office tables         |
+## 🧠 Recognised Classes
+| Class | Example |
+|:------|:---------|
+| Chair | Office chair |
+| Desk Lamp | Table/LED lamp |
+| Headphones | Wired/wireless |
+| Keyboard | Mechanical/membrane |
+| Monitor | LCD/LED monitor |
+| Mouse | Wired/wireless |
+| Mug | Ceramic/cup |
+| Notepad | Notebook |
+| Pen | Writing pen |
+| Table | Office table |
 
 ---
 
-## ⚙️ Setup Instructions
+## ⚙️ Installation Guide
 
 ### 1. Clone Repository
-
 ```bash
 git clone https://github.com/<your-repo-name>.git
 cd ROBOTICSCW
-```
+````
 
-### 2. Create and Activate Virtual Environment
+### 2. Create Virtual Environment
 
 ```bash
 python -m venv venv
@@ -80,88 +78,124 @@ venv\Scripts\activate           # Windows
 pip install -r requirements.txt
 ```
 
-### 4. Dataset Access
+### 4. Download Dataset
 
-* The dataset (≈ 10 classes × several hundred images each) is too large for direct upload.
-* Download the zipped dataset here → [**[Classification Dataset](https://drive.google.com/file/d/18K4xG9XFKQ2DGNMg43CZ8u7B-xJFcFJg/view?usp=drive_link)**]
-* Unzip into:
+Because the dataset is too large for GitHub, download it manually:
+📦 [Classification Dataset (Google Drive)](https://drive.google.com/file/d/18K4xG9XFKQ2DGNMg43CZ8u7B-xJFcFJg/view?usp=drive_link)
+
+Unzip into:
 
 ```
 Classification/dataset/Final_Dataset/
-```
-
-Each subset maintains class-specific folders:
-
-```
-train/
-validation/
-test/
+    ├── train/
+    ├── validation/
+    └── test/
 ```
 
 ---
 
-## 🚀 Running the Application
+## ▶️ How to Run
 
-### Option A – Run Locally
+### Run the Web Application Locally
 
-```bash
-python app.py
-```
+1. Ensure the virtual environment is active.
+2. Launch the app:
 
-Then open **[http://127.0.0.1:5000/](http://127.0.0.1:5000/)** in your browser.
+   ```bash
+   python app.py
+   ```
+3. Open your browser at: [http://127.0.0.1:5000](http://127.0.0.1:5000)
 
-### Option B – Google Colab Training
+You can:
 
-To retrain the model, open
-`Classification/scripts/Training_Classification_Model.ipynb` in Google Colab.
-Ensure GPU runtime is enabled for faster processing.
+* Upload an image to classify.
+* Start your webcam and capture a frame for instant recognition.
+
+**Expected Output:**
+
+* The top predicted class (e.g., “Mug – 97 %”) displayed on screen.
+* Confidence score + top-3 alternative predictions shown below.
 
 ---
 
-## 🧮 Model Details
 
-| Feature                  | Description                                               |
-| ------------------------ | --------------------------------------------------------- |
-| **Architecture**         | ResNet-50 (transfer learning)                             |
-| **Framework**            | PyTorch                                                   |
-| **Optimizer**            | Adam                                                      |
-| **Loss**                 | Cross-Entropy                                             |
-| **Input Size**           | 224 × 224 RGB                                             |
-| **Normalization**        | Mean = [0.485, 0.456, 0.406]; Std = [0.229, 0.224, 0.225] |
-| **Data Augmentation**    | Random flip, rotation, crop, normalization                |
-| **Train/Val/Test Split** | 70 / 15 / 15                                              |
-| **Validation Accuracy**  | ≈ 95 %                                                    |
-| **Macro F1 Score**       | ≈ 0.90 +                                                  |
-| **Saved Weights**        | `office_item_classifier.pth`                              |
+## 📊 Model Details
+
+| Feature                 | Description                              |
+| :---------------------- | :--------------------------------------- |
+| **Architecture**        | ResNet-50 (Transfer Learning)            |
+| **Framework**           | PyTorch                                  |
+| **Input Size**          | 224 × 224 RGB                            |
+| **Optimizer**           | Adam                                     |
+| **Loss Function**       | Cross-Entropy                            |
+| **Augmentation**        | Random flip / rotation / brightness      |
+| **Split**               | 70 % Train / 15 % Validation / 15 % Test |
+| **Validation Accuracy** | ≈ 95 %                                   |
+| **Macro F1-Score**      | ≈ 0.91                                   |
+| **Saved Weights**       | `office_item_classifier.pth`             |
+
+
+---
+
+## 🎯 Object Detection (YOLOv8)
+
+In addition to classification, a **YOLOv8-based object detection model** was developed to locate and label multiple desk items in real time.  
+This detection system complements the classifier by providing **spatial awareness** — helping the robotic arm determine *where* each object is on the desk.
+
+- **Framework:** Ultralytics YOLOv8  
+- **Goal:** Real-time detection and bounding box localization of office items  
+- **Dataset Source:** Roboflow (pre-annotated YOLO format)  
+- **Training:** Fine-tuned pre-trained YOLOv8n model on the same office-item dataset using Google Colab GPU  
+- **Augmentation:** Synthetic background variation and rotation for better generalisation  
+- **Output:** Custom-trained weights `best.pt` integrated into the Flask web app  
+- **Live Detection:** The app displays bounding boxes, labels, and confidence scores from the webcam feed using OpenCV  
+
+This integration enables the robot to perform both **object recognition (ResNet-50)** and **object localisation (YOLOv8)** for a complete desk-organising perception system.
+
 
 ---
 
 ## 🧱 Dataset Card
 
 * **Name:** Office-Goods Dataset
-* **Version:** 1.0
-* **Source:** Kaggle / Roboflow 
-* **Classes:** 10 (chair, desk lamp, headphones, keyboard, monitor, mouse, mug, notepad, pen, table)
-* **Size:** ≈ 4,500 images
-* **Splits:** Train (70 %), Validation (15 %), Test (15 %)
-* **License:** Public, educational use
-* **Pre-processing:** Resized 224×224 px, normalized, converted to JPEG RGB
-* **Usage:** For classification 
+* **Classes:** 10 office items (see table above)
+* **Sources:**  Roboflow 
+* **Image Count:** ≈ 21 000 images
+* **Pre-processing:** 224×224 px resize, RGB JPEG conversion, LANCZOS filter
+* **Split:** Train 70 %  ·  Validation 15 %  ·  Test 15 %
+* **Purpose:** Classification for robotic perception
 
 ---
 
-## 📹 Demonstration
+## 💡 Expected Outputs
 
-A 2-minute code-walkthrough video explaining the installation, dataset structure, and live demo is available at:
-🎥 [YouTube Demo Link](#)
+After running `app.py`, the Flask interface displays:
+
+* **Prediction label** (e.g., “Pen”)
+* **Confidence percentage**
+* **Optional alternate predictions** if confidence < 95 %
+* A preview of the processed image (upload or webcam capture).
+
+When running `_03_evaluate_model.py`:
+
+* Console prints overall accuracy, macro F1, and per-class accuracy.
+* A **Seaborn confusion matrix** pops up for visual validation.
+
 
 ---
 
 ## 👩‍💻 Team Members
 
-| Name                      | Student ID | 
-| ------------------------- | ---------- |
-| **Yukta Emrith**          | M00977987  |
-| **Rohaj Gokool Oopadhya** | M00955505  | 
-| **Kevan Chinapul**        | M00963905  | 
+| Name                      | Student ID |
+| :------------------------ | :--------- |
+| **Yukta R. Emrith**       | M00977987  |
+| **Rohaj Gokool Oopadhya** | M00955505  |
+| **Kevan Chinapul**        | M00963905  |
+
+---
+
+## 📹 Demonstration
+
+🎥 *Code-walkthrough and live classification demo video:* [YouTube Link](#)
+
 
