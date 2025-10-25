@@ -1,99 +1,85 @@
-# ==============================================================
-# 📂 SPLIT DATASET INTO TRAIN, VALIDATION, AND TEST SETS
-# --------------------------------------------------------------
-# Purpose:
-#   Splits the processed dataset into train (70%), validation (15%),
-#   and test (15%) subsets for model training and evaluation.
-#   Maintains class subfolder structure for each split.
-#
-# Input  : Classification/dataset/Processed_Dataset
-# Output : Classification/dataset/Final_Dataset
-# ==============================================================
-
-import os
-import shutil
-import random
-from tqdm import tqdm
-
-# --- Configuration Variables ---
-SOURCE_DIR = 'Classification/dataset/Processed_Dataset'  # Input dataset (normalized images)
-OUTPUT_DIR = 'Classification/dataset/Final_Dataset'      # Output directory for split data
-SPLIT_RATIO = [0.70, 0.15, 0.15]                         # Train, Validation, Test ratios
+# ==========================================================
+# ============ SPLIT IMAGE DATASET =========================
+# ==========================================================
+# This script divides the preprocessed dataset into
+# Training, Validation, and Test sets in a 70/15/15 ratio.
+# It preserves class-specific subfolder structures to ensure
+# balanced sampling for each category.
+# ==========================================================
 
 
+# ---------- Imports ----------
+import os               
+import shutil          
+import random           
+from tqdm import tqdm    
+
+# ---------- Define Directory Paths and Split Ratios ----------
+SOURCE_DIR = 'Classification/dataset/Processed_Dataset'   
+OUTPUT_DIR = 'Classification/dataset/Final_Dataset'       
+SPLIT_RATIO = [0.70, 0.15, 0.15]                          # Train, Validation, Test ratios
+
+
+# ==========================================================
+# ================ SPLITTING FUNCTION ======================
+# ==========================================================
 def split_dataset():
-    """
-    Splits the dataset into training, validation, and test sets.
-    """
 
-    # --- Validate Split Ratio ---
+    
+    # --- Step 1: Validate the split ratio ---
     if sum(SPLIT_RATIO) != 1.0:
         print(f"Error: Split ratio must sum to 1.0, but it sums to {sum(SPLIT_RATIO)}")
         return
-
-    # --- Remove Old Output Directory (if exists) ---
+    
+    # --- Step 2: Remove existing output folder if it already exists ---
     if os.path.exists(OUTPUT_DIR):
         print(f"Removing existing directory: {OUTPUT_DIR}")
         shutil.rmtree(OUTPUT_DIR)
 
-    # --- Create New Output Directory Structure ---
+    # --- Step 3: Create new clean directory structure ---
     print(f"Creating new directory structure at: {OUTPUT_DIR}")
-    train_path = os.path.join(OUTPUT_DIR, 'train')
-    val_path = os.path.join(OUTPUT_DIR, 'validation')
-    test_path = os.path.join(OUTPUT_DIR, 'test')
-    
-    os.makedirs(train_path, exist_ok=True)
-    os.makedirs(val_path, exist_ok=True)
-    os.makedirs(test_path, exist_ok=True)
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-    # --- Get All Class Folders from Source Directory ---
-    class_names = [d for d in os.listdir(SOURCE_DIR) if os.path.isdir(os.path.join(SOURCE_DIR, d))]
-    
-    if not class_names:
-        print(f"No class folders found in {SOURCE_DIR}. Please check your input directory.")
-        return
+    # --- Step 4: Iterate through each class folder ---
+    for class_name in tqdm(os.listdir(SOURCE_DIR), desc="Splitting classes"):
+        class_path = os.path.join(SOURCE_DIR, class_name)
+        if not os.path.isdir(class_path):
+            continue
 
-    print(f"Found {len(class_names)} classes. Starting the split...")
+        # Get list of all image files for this class
+        files = os.listdir(class_path)
+        random.shuffle(files)  # Shuffle to ensure random distribution
 
-    # --- Main Loop: Split Each Class Folder ---
-    for class_name in tqdm(class_names, desc="Processing classes"):
-        # Create class folders for each split
-        os.makedirs(os.path.join(train_path, class_name), exist_ok=True)
-        os.makedirs(os.path.join(val_path, class_name), exist_ok=True)
-        os.makedirs(os.path.join(test_path, class_name), exist_ok=True)
+        # Determine number of files per split
+        train_end = int(SPLIT_RATIO[0] * len(files))
+        val_end = train_end + int(SPLIT_RATIO[1] * len(files))
 
-        class_source_path = os.path.join(SOURCE_DIR, class_name)
-        files = [f for f in os.listdir(class_source_path) if os.path.isfile(os.path.join(class_source_path, f))]
-        
-        # Shuffle files for random distribution
-        random.shuffle(files)
-
-        # Calculate index boundaries for each split
-        train_end = int(len(files) * SPLIT_RATIO[0])
-        val_end = train_end + int(len(files) * SPLIT_RATIO[1])
-
-        # Split files by subset
         train_files = files[:train_end]
         val_files = files[train_end:val_end]
         test_files = files[val_end:]
 
-        # --- Copy Files to Corresponding Folders ---
-        for f in train_files:
-            shutil.copy2(os.path.join(class_source_path, f), os.path.join(train_path, class_name, f))
-        for f in val_files:
-            shutil.copy2(os.path.join(class_source_path, f), os.path.join(val_path, class_name, f))
-        for f in test_files:
-            shutil.copy2(os.path.join(class_source_path, f), os.path.join(test_path, class_name, f))
+        # --- Step 5: Define subfolders for each split ---
+        for split_name, split_files in zip(['train', 'validation', 'test'], [train_files, val_files, test_files]):
+            split_class_dir = os.path.join(OUTPUT_DIR, split_name, class_name)
+            os.makedirs(split_class_dir, exist_ok=True)
 
-    # --- Completion Message ---
-    print("\n Dataset split successfully!")
-    print(f"Final dataset is ready in the '{OUTPUT_DIR}' folder.")
+            # --- Step 6: Copy images into appropriate split folders ---
+            for file in split_files:
+                src_file = os.path.join(class_path, file)
+                dst_file = os.path.join(split_class_dir, file)
+                shutil.copy(src_file, dst_file)
+
+    print("✅ Dataset successfully split into train, validation, and test sets.")
 
 
-# --- Main Execution Entry Point ---
+# ==========================================================
+# ========================= MAIN ===========================
+# ==========================================================
 if __name__ == '__main__':
-    split_dataset()
+    split_dataset()  
 
-# NEXT STEP:
+
+# ==================== NEXT STEP ====================
 # Zip Final_Dataset folder 
-# Upload to Google Drive for easy access
+# Upload to Google Drive for training on Google Colab
+# ==================================================

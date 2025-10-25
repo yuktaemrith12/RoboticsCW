@@ -28,58 +28,67 @@ app = Flask(__name__)
 # =========================================================
 # =============== 1) CLASSIFICATION SECTION ===============
 # =========================================================
+# Switched to YOLOv8-CLS model for image classification.
 
-CLASSES = [
-    'chair', 'desk lamp', 'headphones', 'keyboard', 'monitor',
-    'mouse', 'mug', 'notepad', 'pen', 'table'
-]
+# --- Path to your YOLOv8 classification checkpoint ---
+YOLO_CLS_WEIGHTS = 'office_item_classifier_yolov8cls.pt'
 
 def load_classifier():
-    model = models.resnet50()
-    model.fc = nn.Linear(model.fc.in_features, len(CLASSES))
-    # adjust path if needed
-    state = torch.load('office_item_classifier.pth', map_location='cpu')
-    model.load_state_dict(state)
-    model.eval()
+    """
+    Load YOLOv8 classification model once at startup.
+    """
+    model = YOLO(YOLO_CLS_WEIGHTS)  # Ultralytics handles preprocessing internally
+    model.fuse()                     # small speed boost at inference
     return model
 
 clf_model = load_classifier()
 
-def preprocess_image(img_bytes: bytes) -> torch.Tensor:
-    """Same pipeline for BOTH upload and webcam base64 frames."""
-    transform = transforms.Compose([
-        transforms.Resize(256),
-        transforms.CenterCrop(224),
-        transforms.ToTensor(),
-        transforms.Normalize([0.485, 0.456, 0.406],
-                             [0.229, 0.224, 0.225]),
-    ])
-    img = Image.open(io.BytesIO(img_bytes)).convert('RGB')
-    return transform(img).unsqueeze(0)
+# Class names come from the YOLO model itself
+CLASSES = [name for _, name in sorted(clf_model.names.items(), key=lambda kv: kv[0])]
 
-def run_cls_inference(img_tensor: torch.Tensor):
-    with torch.no_grad():
-        probs = torch.softmax(clf_model(img_tensor), dim=1)
-        top3_probs, top3_idx = torch.topk(probs, 3)
+def preprocess_image(img_bytes: bytes):
+    """
+    Decode raw bytes to an RGB numpy array.
+    YOLOv8 will handle resize/normalization internally.
+    """
+    pil = Image.open(io.BytesIO(img_bytes)).convert('RGB')
+    return np.array(pil)  # HxWx3 RGB
 
-    main_idx = top3_idx[0][0].item()
-    main_class = CLASSES[main_idx]
-    main_conf = float(top3_probs[0][0].item() * 100)
-                                                                                                                            
+def run_cls_inference(image_rgb: np.ndarray):
+    """
+    Run YOLOv8-CLS on an RGB image (numpy array).
+    Returns the top-1 prediction + (optional) top-3 list when confidence < 95%.
+    """
+    results = clf_model(image_rgb, verbose=False)
+    res = results[0]
+
+    # Top-1
+    top1_idx = int(res.probs.top1)
+    top1_conf = float(res.probs.top1conf) * 100.0
+    main_class = CLASSES[top1_idx]
+    main_conf = top1_conf
+
+    # Top-3 (if confidence is not extremely high)
     other_preds = None
-    if main_conf < 95:
-        other_preds = [
-            {'class': CLASSES[top3_idx[0][i].item()],
-             'confidence': f"{top3_probs[0][i].item() * 100:.2f}"}
-            for i in range(1, 3)
-        ]
+    if main_conf < 95.0:
+        # res.probs.data is a tensor of class probabilities
+        probs = res.probs.data.cpu().numpy()
+        top3_idx = probs.argsort()[-3:][::-1]  # indices of top-3 probs
+        other_preds = []
+        for idx in top3_idx:
+            cls_name = CLASSES[int(idx)]
+            conf_pct = probs[int(idx)] * 100.0
+            other_preds.append({'class': cls_name, 'confidence': f"{conf_pct:.2f}"})
+        # Ensure main class is listed first and not duplicated
+        other_preds = [p for p in other_preds if p['class'] != main_class]
+
     return main_class, main_conf, other_preds
 
 # ---- Classification routes ----
 
 @app.route('/', methods=['GET'])
 def home():
-    """Landing page for classification UI (keeps your existing index.html)."""
+    """Landing page for classification UI """
     return render_template('index.html', prediction=None, confidence=None)
 
 @app.route('/predict', methods=['POST'])
@@ -93,8 +102,8 @@ def predict():
         file = request.files['file']
         raw_bytes = file.read()
 
-        img_tensor = preprocess_image(raw_bytes)
-        pred, conf, others = run_cls_inference(img_tensor)
+        img_rgb = preprocess_image(raw_bytes)
+        pred, conf, others = run_cls_inference(img_rgb)
 
         # Optional preview (base64 PNG) for UI
         try:
@@ -133,8 +142,8 @@ def predict():
 
     try:
         img_bytes = base64.b64decode(b64_str)
-        img_tensor = preprocess_image(img_bytes)
-        pred, conf, others = run_cls_inference(img_tensor)
+        img_rgb = preprocess_image(img_bytes)
+        pred, conf, others = run_cls_inference(img_rgb)
 
         return jsonify({
             'prediction': pred,

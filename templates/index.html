@@ -240,7 +240,7 @@
       const formData = new FormData(uploadForm);
       formData.append('ajax', '1'); // lets backend know to send JSON
 
-      // Optional: small loading state
+      // Small loading state
       const box = document.getElementById('upload-result');
       box.classList.remove('hidden');
       box.innerHTML = `<div class="result-row"><div><h3 class="result-title">Predicting…</h3><p class="muted">Please wait</p></div></div>`;
@@ -357,6 +357,8 @@
       }
 
       const data = await res.json();
+
+
       // Build webcam result card
       box.innerHTML = '';
       const row = document.createElement('div');
@@ -419,7 +421,7 @@
       detectorActive = false;
     }
 
-    // Optional: stop stream when navigating away
+    // Stop stream when navigating away
     window.addEventListener('beforeunload', () => {
       if (detectorActive) stopDetection();
     });
