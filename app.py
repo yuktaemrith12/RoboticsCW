@@ -37,8 +37,8 @@ def load_classifier():
     """
     Load YOLOv8 classification model once at startup.
     """
-    model = YOLO(YOLO_CLS_WEIGHTS)  # Ultralytics handles preprocessing internally
-    model.fuse()                     # small speed boost at inference
+    model = YOLO(YOLO_CLS_WEIGHTS)      # Ultralytics handles preprocessing internally
+    model.fuse()                        # small speed boost at inference
     return model
 
 clf_model = load_classifier()
