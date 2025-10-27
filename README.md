@@ -1,31 +1,34 @@
 
-# 🧠 AI in Robotics (PDE3802) — Office Item Classification
+# 🧠 AI in Robotics (PDE3802) — Office Item Classification (YOLOv8)
 
 ## 📘 Overview
-This repository contains the **Classification Module** for the *AI in Robotics (PDE3802)* coursework.  
-It forms the **Perception** component of the desk-organising robotic arm — enabling the robot to **identify and label common office items** from images or a live webcam feed.  
+
+This repository contains the **Classification Module** for the *AI in Robotics (PDE3802)* coursework.
+It forms the **Perception** component of the desk-organising robotic arm — enabling the robot to **recognise and classify common office items** from static images or a live webcam feed.
+
+This version replaces the earlier ResNet-50 model with a **YOLOv8-Classification** pipeline for improved training efficiency, higher accuracy, and seamless integration with the future detection module.
 
 ---
 
 ## 🧩 Project Structure
-```
 
-ROBOTICSCW/
+```
+RoboticsCW/
 │
 ├── Classification/
 │   ├── dataset/
 │   │   ├── Main_Dataset/         # Raw dataset – 10 office item classes
 │   │   ├── Processed_Dataset/    # Normalised 224×224 RGB images
-│   │   └── Final_Dataset/        # Train / Validation / Test split
+│   │   └── Final_Dataset/        # Train / Validation / Test split (70/15/15)
 │   │
 │   └── scripts/
-│       ├── _01_normalize.py      # Image resizing and cleaning
-│       ├── _02_split_script.py   # Train/Val/Test split automation
-│       ├── _03_evaluate_model.py # Accuracy, F1, confusion matrix
-│       └── Training_Classification_Model.ipynb
+│       ├── _01_normalize.py      # Image resizing and cleaning (LANCZOS filter)
+│       ├── _02_split_script.py   # Automated train/val/test splitting
+│       ├── _03_Classification_YOLO_Training.ipynb  # YOLOv8 classification training
+│       ├── _04_evaluate_model.py # Evaluation: accuracy, F1, confusion matrix
 │
-├── app.py                        # Flask app for upload + webcam classification
-├── office_item_classifier.pth    # Trained ResNet-50 weights
+├── app.py                        # Flask app (image upload + webcam classification)
+├── office_item_classifier_yolov8cls.pt  # Trained YOLOv8 classification weights
 │
 ├── static/
 │   ├── style.css
@@ -35,34 +38,35 @@ ROBOTICSCW/
 │   └── index.html                # Web interface (two-tab UI)
 │
 └── README.md
-
-````
+```
 
 ---
 
 ## 🧠 Recognised Classes
-| Class | Example |
-|:------|:---------|
-| Chair | Office chair |
-| Desk Lamp | Table/LED lamp |
-| Headphones | Wired/wireless |
-| Keyboard | Mechanical/membrane |
-| Monitor | LCD/LED monitor |
-| Mouse | Wired/wireless |
-| Mug | Ceramic/cup |
-| Notepad | Notebook |
-| Pen | Writing pen |
-| Table | Office table |
+
+| Class      | 
+| :--------- | 
+| Chair      | 
+| Desk Lamp  | 
+| Headphones | 
+| Keyboard   | 
+| Monitor    |
+| Mouse      | 
+| Mug        | 
+| Notepad    | 
+| Pen        | 
+| Table      | 
 
 ---
 
 ## ⚙️ Installation Guide
 
 ### 1. Clone Repository
+
 ```bash
 git clone https://github.com/<your-repo-name>.git
-cd ROBOTICSCW
-````
+cd RoboticsCW
+```
 
 ### 2. Create Virtual Environment
 
@@ -80,7 +84,7 @@ pip install -r requirements.txt
 
 ### 4. Download Dataset
 
-Because the dataset is too large for GitHub, download it manually:
+The dataset is hosted externally due to size limits:
 📦 [Classification Dataset (Google Drive)](https://drive.google.com/file/d/18K4xG9XFKQ2DGNMg43CZ8u7B-xJFcFJg/view?usp=drive_link)
 
 Unzip into:
@@ -98,99 +102,97 @@ Classification/dataset/Final_Dataset/
 
 ### Run the Web Application Locally
 
-1. Ensure the virtual environment is active.
-2. Launch the app:
+1. Activate your virtual environment.
+2. Launch the Flask app:
 
    ```bash
    python app.py
    ```
 3. Open your browser at: [http://127.0.0.1:5000](http://127.0.0.1:5000)
 
-You can:
+**Features:**
 
-* Upload an image to classify.
-* Start your webcam and capture a frame for instant recognition.
+* Upload an image for classification
+* Capture a webcam frame for instant prediction
+* See the predicted class + confidence score
 
 **Expected Output:**
-
-* The top predicted class (e.g., “Mug – 97 %”) displayed on screen.
-* Confidence score + top-3 alternative predictions shown below.
+Example → “Monitor – 96 %” with top-3 alternatives displayed.
 
 ---
 
 
-## 📊 Model Details
+## 🧪 Evaluation Results
 
-| Feature                 | Description                              |
-| :---------------------- | :--------------------------------------- |
-| **Architecture**        | ResNet-50 (Transfer Learning)            |
-| **Framework**           | PyTorch                                  |
-| **Input Size**          | 224 × 224 RGB                            |
-| **Optimizer**           | Adam                                     |
-| **Loss Function**       | Cross-Entropy                            |
-| **Augmentation**        | Random flip / rotation / brightness      |
-| **Split**               | 70 % Train / 15 % Validation / 15 % Test |
-| **Validation Accuracy** | ≈ 95 %                                   |
-| **Macro F1-Score**      | ≈ 0.91                                   |
-| **Saved Weights**       | `office_item_classifier.pth`             |
+**Overall Performance**
 
+```
+Accuracy : 0.9579
+Macro F1 : 0.9551
+```
+
+**Per-Class Metrics (excerpt)**
+
+| Class     | Acc   | Prec  | Rec   | F1    |
+| :-------- | :---- | :---- | :---- | :---- |
+| Chair     | 0.909 | 0.955 | 0.909 | 0.931 |
+| Desk Lamp | 0.993 | 0.997 | 0.993 | 0.995 |
+| Keyboard  | 0.985 | 0.973 | 0.985 | 0.979 |
+| Mug       | 0.997 | 0.997 | 0.997 | 0.997 |
+| Notepad   | 0.993 | 0.993 | 0.993 | 0.993 |
+| Table     | 0.888 | 0.820 | 0.888 | 0.853 |
+
+**Key Insight:**
+The confusion matrix shows predictions tightly clustered along the diagonal — meaning minimal misclassifications. Slight confusion occurs between *chair* and *table*, which share similar textures in some samples.
 
 ---
 
 ## 🎯 Object Detection (YOLOv8)
 
-In addition to classification, a **YOLOv8-based object detection model** was developed to locate and label multiple desk items in real time.  
-This detection system complements the classifier by providing **spatial awareness** — helping the robotic arm determine *where* each object is on the desk.
+In addition to classification, a **YOLOv8 detection module** was developed to locate multiple desk items in real time.
+It provides **spatial awareness** for robotic manipulation.
 
-- **Framework:** Ultralytics YOLOv8  
-- **Goal:** Real-time detection and bounding box localization of office items  
-- **Dataset Source:** Roboflow (pre-annotated YOLO format)  
-- **Training:** Fine-tuned pre-trained YOLOv8n model on the same office-item dataset using Google Colab GPU  
-- **Augmentation:** Synthetic background variation and rotation for better generalisation  
-- **Output:** Custom-trained weights `best.pt` integrated into the Flask web app  
-- **Live Detection:** The app displays bounding boxes, labels, and confidence scores from the webcam feed using OpenCV  
-
-This integration enables the robot to perform both **object recognition (ResNet-50)** and **object localisation (YOLOv8)** for a complete desk-organising perception system.
-
+| Feature            | Description                                                                             |
+| :----------------- | :---------------------------------------------------------------------------------------|
+| **Framework**      | Ultralytics YOLOv8                                                                      |
+| **Goal**           | Detect and localise multiple objects                                                    |
+| **Dataset Source** | Roboflow (YOLO format)                                                                  |
+| **Model**          | Fine-tuned YOLOv8n                                                                      |
+| **Output**         | `office_item_classifier_yolov8cls.pt` — integrated into Flask for live webcam detection |
 
 ---
 
 ## 🧱 Dataset Card
 
-* **Name:** Office-Goods Dataset
-* **Classes:** 10 office items (see table above)
-* **Sources:**  Roboflow 
-* **Image Count:** ≈ 21 000 images
-* **Pre-processing:** 224×224 px resize, RGB JPEG conversion, LANCZOS filter
-* **Split:** Train 70 %  ·  Validation 15 %  ·  Test 15 %
-* **Purpose:** Classification for robotic perception
+| Attribute          | Details                               |
+| :----------------- | :------------------------------------ |
+| **Name**           | Office-Goods Dataset                  |
+| **Classes**        | 10 office items                       |
+| **Sources**        | Roboflow + Synthetic Augmentation     |
+| **Image Count**    | ≈ 21 000                              |
+| **Pre-processing** | 224×224 resize, RGB JPEG, LANCZOS     |
+| **Split**          | 70 % Train · 15 % Val · 15 % Test     |
+| **Purpose**        | Classification for robotic perception |
 
 ---
 
 ## 💡 Expected Outputs
 
-After running `app.py`, the Flask interface displays:
+When running:
 
-* **Prediction label** (e.g., “Pen”)
-* **Confidence percentage**
-* **Optional alternate predictions** if confidence < 95 %
-* A preview of the processed image (upload or webcam capture).
+* `_04_evaluate_model.py` → prints accuracy, F1, per-class stats, and displays the confusion matrix
+* `app.py` → web app predicts class and confidence from uploads / webcam
 
-When running `_03_evaluate_model.py`:
-
-* Console prints overall accuracy, macro F1, and per-class accuracy.
-* A **Seaborn confusion matrix** pops up for visual validation.
 ---
-
 
 ## 🛠️ Troubleshooting
 
-| Issue                        | Possible Cause                      | Fix                                                                    |
-| :--------------------------- | :---------------------------------- | :--------------------------------------------------------------------- |
-| `torch not found`            | Environment not activated           | Run `source venv/bin/activate` or `venv\Scripts\activate`              |
-| `FileNotFoundError: dataset` | Dataset not extracted properly      | Ensure the folder path matches `Classification/dataset/Final_Dataset/` |
-| Webcam not opening           | Access permission or missing driver | Restart browser / allow camera / use `python app.py` locally           |
-| Poor accuracy on retrain     | Unbalanced data or too few epochs   | Increase epochs (25-30) and check dataset split                        |
+| Issue              | Cause                     | Fix                                                       |
+| :----------------- | :------------------------ | :-------------------------------------------------------- |
+| `torch not found`  | Environment not activated | Run `source venv/bin/activate` or `venv\Scripts\activate` |
+| Dataset not found  | Wrong extraction path     | Ensure `Classification/dataset/Final_Dataset/` exists     |
+| Webcam not opening | Permission issue          | Allow camera access or run locally                        |
+| Low accuracy       | Unbalanced dataset        | Increase epochs / augment data                            |
 
 ---
 
@@ -201,10 +203,4 @@ When running `_03_evaluate_model.py`:
 | **Yukta R. Emrith**       | M00977987  |
 | **Rohaj Gokool Oopadhya** | M00955505  |
 | **Kevan Chinapul**        | M00963905  |
-
----
-
-
-
-
 
