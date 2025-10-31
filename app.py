@@ -28,7 +28,7 @@ app = Flask(__name__)
 # =========================================================
 # =============== 1) CLASSIFICATION SECTION ===============
 # =========================================================
-# Switched to YOLOv8-CLS model for image classification.
+
 
 # --- Path to your YOLOv8 classification checkpoint ---
 YOLO_CLS_WEIGHTS = 'office_item_classifier_yolov8cls.pt'
@@ -52,7 +52,7 @@ def preprocess_image(img_bytes: bytes):
     YOLOv8 will handle resize/normalization internally.
     """
     pil = Image.open(io.BytesIO(img_bytes)).convert('RGB')
-    return np.array(pil)  # HxWx3 RGB
+    return np.array(pil)   
 
 def run_cls_inference(image_rgb: np.ndarray):
     """
@@ -68,7 +68,7 @@ def run_cls_inference(image_rgb: np.ndarray):
     main_class = CLASSES[top1_idx]
     main_conf = top1_conf
 
-    # Top-3 (if confidence is not extremely high)
+    # Top-3  
     other_preds = None
     if main_conf < 95.0:
         # res.probs.data is a tensor of class probabilities
@@ -105,7 +105,7 @@ def predict():
         img_rgb = preprocess_image(raw_bytes)
         pred, conf, others = run_cls_inference(img_rgb)
 
-        # Optional preview (base64 PNG) for UI
+        # Preview (base64 PNG) for UI
         try:
             pil_img = Image.open(io.BytesIO(raw_bytes)).convert('RGB')
             buf = io.BytesIO()
@@ -196,13 +196,13 @@ def process_frames():
         try:
             raw = raw_frames_buffer.popleft()
 
-            # Process with YOLO (let YOLO handle resize for speed)
+            # Process with YOLO (YOLO handles resize for speed)
             results = det_model(raw, imgsz=640, verbose=False)
             
             # Use default confidence (0.25)
             annotated = results[0].plot()
             
-            # --- Optional Test: Lower confidence to see weak detections ---
+            # ---  Test: Lower confidence to see weak detections ---
             # annotated = results[0].plot(conf=0.1) 
 
             processed_frames_buffer.append(annotated)
@@ -239,8 +239,8 @@ def generate_web_frames():
         print("[YOLO] Client disconnected from video feed.")
         stop_detection_threads()
 
-# ---- Detection routes ----
 
+# ---- Detection routes ----
 @app.route('/detect')
 def detect_page():
     """Simple page that shows the live YOLO stream (create templates/detect.html)."""
@@ -249,7 +249,7 @@ def detect_page():
 @app.route('/video_feed')
 def video_feed():
     """Live MJPEG stream for detection."""
-    # *FIX: Start threads *only when this page is requested
+    #  Start threads only when this page is requested
     start_detection_threads(camera_index=0) 
     return Response(generate_web_frames(),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
@@ -262,9 +262,9 @@ def video_feed():
 def start_detection_threads(camera_index=0):
     global camera, capture_thread, processing_thread
     if capture_thread and capture_thread.is_alive():
-        return  # already running
+        return  
 
-    # *FIX*: Clear the stop event in case it was set by a previous run
+    # Clear the stop event in case it was set by a previous run
     stop_event.clear()
 
     camera = cv2.VideoCapture(camera_index)
